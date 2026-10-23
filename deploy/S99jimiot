@@ -1,0 +1,45 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          jimiot
+# Required-Start:    $network
+# Default-Start:     S
+# Default-Stop:      0 6
+### END INIT INFO
+
+APP_DIR=/userdata/jimiot
+PIDFILE=/run/jimiot.pid
+LOGFILE=/userdata/jimiot/jimiot.log
+NAME=jimiot
+
+start() {
+  if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+    echo "$NAME already running (pid $(cat "$PIDFILE"))"
+    return 0
+  fi
+  start-stop-daemon -S -b -m -p "$PIDFILE" -x /bin/sh -- "$APP_DIR/run.sh"
+  echo "$NAME started (pid $(cat "$PIDFILE" 2>/dev/null))"
+}
+
+stop() {
+  if [ ! -f "$PIDFILE" ]; then echo "$NAME not running"; return 0; fi
+  start-stop-daemon -K -p "$PIDFILE" -R 5 >/dev/null 2>&1
+  rm -f "$PIDFILE"
+  echo "$NAME stopped"
+}
+
+status() {
+  if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+    echo "$NAME running (pid $(cat "$PIDFILE"))"
+    return 0
+  fi
+  echo "$NAME not running"
+  return 1
+}
+
+case "$1" in
+  start) start ;;
+  stop) stop ;;
+  restart) stop; sleep 1; start ;;
+  status) status ;;
+  *) echo "Usage: $0 {start|stop|restart|status}"; exit 1 ;;
+esac

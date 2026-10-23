@@ -1,0 +1,1371 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#06070a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>极米遥控器</title>
+<style>
+  :root {
+    --bg: #06070a;
+    --text: #eef2f8;
+    --muted: #8e97a9;
+    --faint: #6b7487;
+    --accent: #7ee7d5;
+    --accent-dim: rgba(126, 231, 213, .16);
+    --danger: #ff6b62;
+    --key-top: #343a46;
+    --key-bottom: #1d212a;
+    --line: rgba(255, 255, 255, .075);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    font-size: clamp(12px, 4.4vw, 16px);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    padding:
+      max(1.1rem, env(safe-area-inset-top))
+      1rem
+      max(1.1rem, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro SC", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    background: var(--bg);
+    overflow-y: auto;
+    touch-action: manipulation;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(120% 80% at 8% -12%, rgba(126, 231, 213, .13), transparent 55%),
+      radial-gradient(110% 80% at 108% 112%, rgba(104, 137, 255, .15), transparent 58%),
+      #06070a;
+  }
+
+  .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+  .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* 遥控器外壳                                                        */
+  /* ---------------------------------------------------------------- */
+
+  .remote {
+    position: relative;
+    isolation: isolate;
+    width: min(100%, 24rem);
+    padding: 1.35rem 1.35rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    border-radius: 2.2rem;
+    border: 1px solid rgba(255, 255, 255, .085);
+    background: linear-gradient(165deg, #2b303b 0%, #191c23 42%, #0f1116 100%);
+    box-shadow:
+      0 2.4rem 4.5rem -1.6rem rgba(0, 0, 0, .92),
+      0 0 0 1px rgba(0, 0, 0, .55),
+      inset 0 1px 0 rgba(255, 255, 255, .14),
+      inset 0 -1px 0 rgba(0, 0, 0, .65);
+    animation: rise .55s cubic-bezier(.2, .8, .3, 1) both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(.9rem) scale(.985); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .remote::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      linear-gradient(150deg, rgba(255, 255, 255, .07), transparent 26%),
+      radial-gradient(90% 60% at 50% 0%, rgba(255, 255, 255, .05), transparent 60%);
+  }
+
+  .remote > * { position: relative; z-index: 1; }
+
+  /* ---------------------------------------------------------------- */
+  /* 顶部                                                              */
+  /* ---------------------------------------------------------------- */
+
+  .topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .1rem .15rem .15rem;
+  }
+
+  .brand { display: flex; align-items: flex-start; gap: .6rem; min-width: 0; }
+
+  .led {
+    width: .46rem;
+    height: .46rem;
+    margin-top: .42rem;
+    border-radius: 50%;
+    flex: none;
+    background: #57d68a;
+    box-shadow: 0 0 0 .18rem rgba(87, 214, 138, .13), 0 0 .7rem rgba(87, 214, 138, .85);
+    transition: background .2s ease, box-shadow .2s ease;
+  }
+
+  .led.busy {
+    background: var(--accent);
+    box-shadow: 0 0 0 .18rem rgba(126, 231, 213, .16), 0 0 1rem rgba(126, 231, 213, .95);
+    animation: led-pulse .45s ease;
+  }
+
+  @keyframes led-pulse {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.55); }
+    100% { transform: scale(1); }
+  }
+
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .22rem;
+    min-width: 0;
+  }
+
+  .brand-title {
+    font-size: .98rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    line-height: 1.15;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    max-width: 100%;
+    padding: .16rem .52rem .17rem .42rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .045);
+    color: #b7c1d3;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .66rem;
+    letter-spacing: .01em;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+
+  .chip span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chip-dot {
+    width: .3rem;
+    height: .3rem;
+    flex: none;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 .35rem rgba(126, 231, 213, .8);
+  }
+
+  .icon-btn {
+    width: 2.15rem;
+    height: 2.15rem;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .035);
+    color: var(--muted);
+    cursor: pointer;
+    transition: color .15s ease, border-color .15s ease, background .15s ease, transform .1s ease;
+  }
+
+  .icon-btn .icon { width: 1.05rem; height: 1.05rem; }
+
+  /* ---------------------------------------------------------------- */
+  /* 通用按键                                                          */
+  /* ---------------------------------------------------------------- */
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    gap: .8rem;
+  }
+
+  .row { display: flex; gap: .65rem; }
+
+  .key {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-width: 0;
+    padding: 0 .6rem;
+    border: 0;
+    border-radius: 1.05rem;
+    background: linear-gradient(180deg, var(--key-top), var(--key-bottom));
+    color: var(--text);
+    font: inherit;
+    font-size: .82rem;
+    font-weight: 500;
+    letter-spacing: .02em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .1),
+      inset 0 -1px 0 rgba(0, 0, 0, .6),
+      0 .5rem 1rem -.45rem rgba(0, 0, 0, .85);
+    transition: transform .09s ease, box-shadow .14s ease, background .14s ease, color .14s ease;
+  }
+
+  .key:active,
+  .key.pressed {
+    transform: translateY(.09rem) scale(.985);
+    background: linear-gradient(180deg, #3b424f, #232832);
+    box-shadow:
+      inset 0 .13rem .4rem rgba(0, 0, 0, .7),
+      inset 0 0 0 1px rgba(126, 231, 213, .22),
+      0 0 1.4rem -.25rem rgba(126, 231, 213, .3);
+  }
+
+  .key:focus-visible,
+  .icon-btn:focus-visible,
+  .chip:focus-visible,
+  .rocker button:focus-visible,
+  .btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .quick-row .key { flex: 1; height: 3.15rem; }
+
+  .quick-row .key span { font-size: .78rem; color: #d5ddea; }
+
+  .key--power {
+    background: linear-gradient(180deg, #3a2a30, #241a1f);
+    color: #ffada7;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .1),
+      inset 0 0 0 1px rgba(255, 107, 98, .16),
+      0 .5rem 1rem -.45rem rgba(0, 0, 0, .85);
+  }
+
+  .key--power .icon {
+    width: 1.3rem;
+    height: 1.3rem;
+    filter: drop-shadow(0 0 .4rem rgba(255, 107, 98, .55));
+  }
+
+  .key--power span { color: #ffc4bf; }
+
+  .key--power:active,
+  .key--power.pressed {
+    background: linear-gradient(180deg, #462f37, #2a1d23);
+    box-shadow:
+      inset 0 .13rem .4rem rgba(0, 0, 0, .7),
+      inset 0 0 0 1px rgba(255, 107, 98, .4),
+      0 0 1.5rem -.2rem rgba(255, 107, 98, .45);
+  }
+
+  /* 开机键：用强调色和关机键区分 */
+  .key--wake {
+    background: linear-gradient(180deg, #173432, #0e2321);
+    color: var(--accent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .08),
+      inset 0 0 0 1px rgba(126, 231, 213, .22),
+      0 .5rem 1rem -.45rem rgba(0, 0, 0, .85);
+  }
+
+  .key--wake .icon {
+    width: 1.3rem;
+    height: 1.3rem;
+    filter: drop-shadow(0 0 .4rem rgba(126, 231, 213, .5));
+  }
+
+  .key--wake span { color: #bff5ea; }
+
+  .key--wake:active,
+  .key--wake.pressed {
+    background: linear-gradient(180deg, #1c4440, #102a27);
+    box-shadow:
+      inset 0 .13rem .4rem rgba(0, 0, 0, .7),
+      inset 0 0 0 1px rgba(126, 231, 213, .5),
+      0 0 1.5rem -.2rem rgba(126, 231, 213, .4);
+  }
+
+  .key--wake[disabled] {
+    opacity: .55;
+    cursor: progress;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* 方向键                                                            */
+  /* ---------------------------------------------------------------- */
+
+  .dpad {
+    width: 100%;
+    max-width: 15.5rem;
+    aspect-ratio: 1;
+    margin: .15rem auto .1rem;
+    padding: .75rem;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    grid-template-rows: 1fr 1.2fr 1fr;
+    gap: .4rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 22%, #30353f 0%, #191c22 55%, #0e1015 100%);
+    box-shadow:
+      inset 0 .1rem 0 rgba(255, 255, 255, .09),
+      inset 0 -1.4rem 2.2rem rgba(0, 0, 0, .55),
+      0 1.6rem 2.2rem -1.1rem rgba(0, 0, 0, .9);
+  }
+
+  .dpad::after {
+    content: "";
+    position: absolute;
+    inset: .5rem;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, .045);
+    pointer-events: none;
+  }
+
+  .dpad { position: relative; }
+
+  .arrow {
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: #a7b1c4;
+    touch-action: none;
+  }
+
+  .arrow .icon {
+    width: 1.65rem;
+    height: 1.65rem;
+    stroke-width: 1.7;
+    transition: transform .12s ease;
+  }
+
+  .arrow.up { grid-area: 1 / 2; }
+  .arrow.up .icon { transform: rotate(0deg); }
+  .arrow.left { grid-area: 2 / 1; }
+  .arrow.left .icon { transform: rotate(-90deg); }
+  .arrow.right { grid-area: 2 / 3; }
+  .arrow.right .icon { transform: rotate(90deg); }
+  .arrow.down { grid-area: 3 / 2; }
+  .arrow.down .icon { transform: rotate(180deg); }
+
+  .arrow:active,
+  .arrow.pressed {
+    background: var(--accent-dim);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px rgba(126, 231, 213, .22);
+    transform: scale(.96);
+  }
+
+  .arrow:active .icon,
+  .arrow.pressed .icon { transform: rotate(var(--rot, 0deg)) scale(.92); }
+  .arrow.left:active .icon, .arrow.left.pressed .icon { --rot: -90deg; }
+  .arrow.right:active .icon, .arrow.right.pressed .icon { --rot: 90deg; }
+  .arrow.down:active .icon, .arrow.down.pressed .icon { --rot: 180deg; }
+
+  .ok {
+    grid-area: 2 / 2;
+    border-radius: 50%;
+    padding: 0;
+    font-size: .92rem;
+    font-weight: 650;
+    letter-spacing: .08em;
+    color: var(--accent);
+    background: linear-gradient(180deg, #2d333e, #1a1d24);
+    box-shadow:
+      inset 0 0 0 1px rgba(126, 231, 213, .28),
+      inset 0 1px 0 rgba(255, 255, 255, .1),
+      0 .7rem 1.4rem -.6rem rgba(0, 0, 0, .95);
+  }
+
+  .ok:active,
+  .ok.pressed {
+    transform: scale(.955);
+    background: linear-gradient(180deg, #2f3c3c, #1a2224);
+    box-shadow:
+      inset 0 .18rem .5rem rgba(0, 0, 0, .65),
+      inset 0 0 0 1px rgba(126, 231, 213, .55),
+      0 0 1.7rem -.15rem rgba(126, 231, 213, .45);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* 底部按键与音量                                                     */
+  /* ---------------------------------------------------------------- */
+
+  .nav-row .key { flex: 1; height: 2.95rem; }
+
+  .nav-row .icon { width: 1.1rem; height: 1.1rem; color: #99a4b8; }
+
+  .nav-row .key:active .icon,
+  .nav-row .key.pressed .icon { color: var(--accent); }
+
+  .rocker {
+    display: grid;
+    grid-template-columns: 3.3rem 1fr 3.3rem;
+    height: 2.95rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #242932, #14171d);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .08),
+      inset 0 -1px 0 rgba(0, 0, 0, .7),
+      0 .4rem 1rem -.5rem rgba(0, 0, 0, .85);
+  }
+
+  .rocker button {
+    border: 0;
+    background: transparent;
+    color: #dde4f0;
+    font: inherit;
+    font-size: 1.4rem;
+    font-weight: 300;
+    line-height: 1;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    touch-action: none;
+    transition: background .12s ease, color .12s ease;
+  }
+
+  .rocker button:active,
+  .rocker button.pressed { background: var(--accent-dim); color: var(--accent); }
+
+  .rocker-label {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    border-left: 1px solid rgba(255, 255, 255, .06);
+    border-right: 1px solid rgba(255, 255, 255, .06);
+    color: var(--muted);
+    font-size: .7rem;
+    letter-spacing: .14em;
+  }
+
+  .rocker-label .icon { width: .95rem; height: .95rem; }
+
+  .hint {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .3rem .55rem;
+    margin: .15rem 0 0;
+    color: var(--faint);
+    font-size: .63rem;
+    letter-spacing: .02em;
+    line-height: 1.7;
+  }
+
+  .hint kbd {
+    display: inline-block;
+    min-width: 1.1rem;
+    padding: .03rem .28rem;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: .3rem;
+    background: rgba(255, 255, 255, .05);
+    color: #9aa5b8;
+    font-family: inherit;
+    font-size: .61rem;
+    text-align: center;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* 设置弹层                                                          */
+  /* ---------------------------------------------------------------- */
+
+  .sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 1.2rem;
+    background: rgba(4, 5, 8, .62);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .18s ease, visibility .18s ease;
+  }
+
+  .sheet.open { opacity: 1; visibility: visible; }
+
+  .sheet-card {
+    width: min(100%, 21rem);
+    padding: 1.3rem 1.25rem 1.15rem;
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 1.4rem;
+    background: linear-gradient(170deg, #272c37, #14171d);
+    box-shadow:
+      0 2rem 3rem -1rem rgba(0, 0, 0, .9),
+      inset 0 1px 0 rgba(255, 255, 255, .12);
+    transform: translateY(.6rem) scale(.98);
+    transition: transform .2s cubic-bezier(.2, .8, .3, 1);
+  }
+
+  .sheet.open .sheet-card { transform: none; }
+
+  .sheet-card h2 {
+    margin: 0 0 .35rem;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+
+  .sheet-card > p {
+    margin: 0 0 1rem;
+    color: var(--muted);
+    font-size: .73rem;
+    line-height: 1.65;
+  }
+
+  .sheet-card label {
+    display: block;
+    margin-bottom: .35rem;
+    color: #aab4c6;
+    font-size: .7rem;
+    letter-spacing: .06em;
+  }
+
+
+  .sheet-card input {
+    width: 100%;
+    padding: .68rem .8rem;
+    border: 1px solid rgba(255, 255, 255, .11);
+    border-radius: .75rem;
+    background: rgba(0, 0, 0, .38);
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: max(16px, 1rem);
+    letter-spacing: .04em;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+
+  .sheet-card input::placeholder { color: #5d6678; }
+
+  .sheet-card input:focus {
+    outline: none;
+    border-color: rgba(126, 231, 213, .6);
+    box-shadow: 0 0 0 .2rem rgba(126, 231, 213, .13);
+  }
+
+  .form-error {
+    min-height: 1.15rem;
+    margin: .4rem 0 0;
+    color: #ff9a94;
+    font-size: .7rem;
+    line-height: 1.4;
+  }
+
+  .sheet-actions {
+    display: flex;
+    gap: .6rem;
+    margin-top: .55rem;
+  }
+
+  .btn {
+    flex: 1;
+    height: 2.6rem;
+    border: 0;
+    border-radius: .7rem;
+    font: inherit;
+    font-size: .82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: filter .15s ease, transform .09s ease, background .15s ease;
+  }
+
+  .btn:active { transform: translateY(.06rem) scale(.99); }
+
+  .btn.ghost {
+    background: rgba(255, 255, 255, .06);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+    color: #d3dbe8;
+  }
+
+  .btn.primary {
+    background: linear-gradient(180deg, #8cefdf, #5fd6c2);
+    color: #052a25;
+    font-weight: 600;
+    box-shadow: 0 .5rem 1.2rem -.55rem rgba(126, 231, 213, .85);
+  }
+
+  .btn[disabled] { opacity: .6; cursor: default; }
+
+  .sheet-meta {
+    margin: .95rem 0 0 !important;
+    padding-top: .8rem;
+    border-top: 1px solid rgba(255, 255, 255, .06);
+    color: var(--faint) !important;
+    font-size: .65rem !important;
+    letter-spacing: .01em;
+  }
+
+  .sheet-meta code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: #93a0b6;
+  }
+
+  .sheet-lan {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .45rem;
+    margin: .5rem 0 0 !important;
+    font-size: .7rem !important;
+    color: var(--faint) !important;
+  }
+
+  .lan-url {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .72rem;
+    line-height: 1.5;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px dashed rgba(126, 231, 213, .35);
+    border-radius: .5rem;
+    padding: .18rem .5rem;
+    cursor: pointer;
+    word-break: break-all;
+    transition: background .15s ease, border-color .15s ease;
+  }
+
+  .lan-url:hover {
+    background: rgba(126, 231, 213, .24);
+    border-color: rgba(126, 231, 213, .55);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* 提示条                                                            */
+  /* ---------------------------------------------------------------- */
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(1.3rem + env(safe-area-inset-bottom));
+    z-index: 60;
+    max-width: calc(100vw - 2rem);
+    padding: .55rem .95rem;
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 999px;
+    background: rgba(17, 21, 27, .93);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: #dde5f2;
+    font-size: .73rem;
+    letter-spacing: .01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 1rem 2rem -.7rem rgba(0, 0, 0, .9);
+    opacity: 0;
+    transform: translate(-50%, .8rem);
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+  }
+
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  .toast.error {
+    border-color: rgba(255, 107, 98, .45);
+    color: #ffb9b4;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* 悬停（桌面端）                                                     */
+  /* ---------------------------------------------------------------- */
+
+  @media (hover: hover) {
+    .key:hover { background: linear-gradient(180deg, #3b414e, #232730); }
+    .key--power:hover { background: linear-gradient(180deg, #46333a, #2b1f25); }
+    .arrow:hover { background: rgba(255, 255, 255, .05); color: #dbe3f0; }
+    .ok:hover { background: linear-gradient(180deg, #343b47, #1f232b); }
+    .rocker button:hover { background: rgba(255, 255, 255, .045); color: #fff; }
+    .icon-btn:hover, .chip:hover { color: var(--text); border-color: rgba(255, 255, 255, .16); }
+    .btn.ghost:hover { background: rgba(255, 255, 255, .1); }
+    .btn.primary:hover { filter: brightness(1.05); }
+  }
+
+  @media (hover: none) {
+    .hint { display: none; }
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* 大屏：整体等比放大                                                 */
+  /* ---------------------------------------------------------------- */
+
+  @media (min-width: 700px) and (min-height: 640px) {
+    html { font-size: 17px; }
+  }
+
+  @media (min-width: 1140px) and (min-height: 820px) {
+    html { font-size: 18px; }
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* 横屏 / 矮屏：左右双栏                                             */
+  /* ---------------------------------------------------------------- */
+
+  @media (orientation: landscape) and (max-height: 620px) {
+    html { font-size: clamp(10px, 2.6vh, 14px); }
+
+    body { padding: .7rem; }
+
+    .remote {
+      width: min(100%, 42rem);
+      padding: 1rem 1.15rem;
+      border-radius: 1.8rem;
+      gap: .6rem;
+    }
+
+    .panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        "dpad quick"
+        "dpad nav"
+        "dpad rocker";
+      align-items: center;
+      gap: .55rem 1.3rem;
+    }
+
+    .dpad {
+      grid-area: dpad;
+      max-width: min(100%, 56vh);
+      margin: 0 auto;
+    }
+
+    .quick-row { grid-area: quick; align-self: end; }
+    .nav-row { grid-area: nav; }
+    .rocker { grid-area: rocker; align-self: start; }
+
+    .quick-row .key { height: 2.85rem; }
+    .nav-row .key { height: 2.65rem; }
+    .rocker { height: 2.65rem; }
+
+    .hint { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important;
+      transition-duration: .001ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-power" viewBox="0 0 24 24">
+    <path d="M12 3v9"/>
+    <path d="M6.3 6.3a8 8 0 1 0 11.4 0"/>
+  </symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </symbol>
+  <symbol id="i-home" viewBox="0 0 24 24">
+    <path d="M3.5 10.6 12 3.5l8.5 7.1"/>
+    <path d="M6 9.7V20.5h12V9.7"/>
+  </symbol>
+  <symbol id="i-back" viewBox="0 0 24 24">
+    <path d="M9.5 14.5 4.5 9.5l5-5"/>
+    <path d="M4.5 9.5h9.2a6.3 6.3 0 0 1 0 12.6h-3"/>
+  </symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24">
+    <path d="M4.5 7h15M4.5 12h15M4.5 17h15"/>
+  </symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24">
+    <path d="M6 15l6-6 6 6"/>
+  </symbol>
+  <symbol id="i-speaker" viewBox="0 0 24 24">
+    <path d="M11 5 6.5 9H3v6h3.5L11 19z"/>
+    <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+    <path d="M18.5 5.8a9 9 0 0 1 0 12.4"/>
+  </symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24">
+    <path d="M11 5 6.5 9H3v6h3.5L11 19z"/>
+    <path d="M15.5 9.5 20.5 14.5"/>
+    <path d="M20.5 9.5 15.5 14.5"/>
+  </symbol>
+</svg>
+
+<main class="remote" aria-label="极米投影仪遥控器">
+  <header class="topbar">
+    <div class="brand">
+      <span class="led" id="led" aria-hidden="true"></span>
+      <div class="brand-text">
+        <span class="brand-title">极米遥控器</span>
+        <button class="chip" id="ipChip" type="button" title="修改投影仪地址">
+          <span class="chip-dot" aria-hidden="true"></span>
+          <span id="ipText">192.168.1.19</span>
+        </button>
+      </div>
+    </div>
+    <button class="icon-btn" id="gear" type="button" aria-label="设置投影仪地址">
+      <svg class="icon"><use href="#i-gear"/></svg>
+    </button>
+  </header>
+
+  <div class="panel">
+    <div class="row quick-row">
+      <button class="key key--wake" id="wakeBtn" type="button" aria-label="开机"
+              title="通过蓝牙广播唤醒待机中的投影仪">
+        <svg class="icon"><use href="#i-power"/></svg><span id="wakeLabel">开机</span>
+      </button>
+      <button class="key key--power" data-key="power" type="button" aria-label="关机"
+              title="切换待机 / 唤醒">
+        <svg class="icon"><use href="#i-power"/></svg><span>关机</span>
+      </button>
+      <button class="key" data-key="menu" type="button" aria-label="菜单">
+        <svg class="icon"><use href="#i-menu"/></svg><span>菜单</span>
+      </button>
+    </div>
+
+    <div class="dpad" role="group" aria-label="方向键">
+      <button class="key arrow up" data-key="up" type="button" aria-label="上">
+        <svg class="icon"><use href="#i-chevron"/></svg>
+      </button>
+      <button class="key arrow left" data-key="left" type="button" aria-label="左">
+        <svg class="icon"><use href="#i-chevron"/></svg>
+      </button>
+      <button class="key ok" data-key="ok" type="button" aria-label="确定">OK</button>
+      <button class="key arrow right" data-key="right" type="button" aria-label="右">
+        <svg class="icon"><use href="#i-chevron"/></svg>
+      </button>
+      <button class="key arrow down" data-key="down" type="button" aria-label="下">
+        <svg class="icon"><use href="#i-chevron"/></svg>
+      </button>
+    </div>
+
+    <div class="row nav-row">
+      <button class="key nav-btn" data-key="back" type="button">
+        <svg class="icon"><use href="#i-back"/></svg><span>返回</span>
+      </button>
+      <button class="key nav-btn" data-key="home" type="button">
+        <svg class="icon"><use href="#i-home"/></svg><span>主页</span>
+      </button>
+      <button class="key nav-btn" data-key="mute" type="button">
+        <svg class="icon"><use href="#i-mute"/></svg><span>静音</span>
+      </button>
+    </div>
+
+    <div class="rocker">
+      <button data-key="volDown" type="button" aria-label="音量减">−</button>
+      <div class="rocker-label">
+        <svg class="icon"><use href="#i-speaker"/></svg><span>音量</span>
+      </div>
+      <button data-key="volUp" type="button" aria-label="音量加">+</button>
+    </div>
+  </div>
+
+  <p class="hint">
+    <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 方向</span>
+    <span><kbd>Enter</kbd> 确定</span>
+    <span><kbd>Esc</kbd> 返回</span>
+    <span><kbd>H</kbd> 主页</span>
+    <span><kbd>P</kbd> 开机</span>
+    <span><kbd>O</kbd> 关机</span>
+    <span><kbd>M</kbd> 菜单</span>
+    <span><kbd>+</kbd><kbd>-</kbd> 音量</span>
+    <span><kbd>0</kbd> 静音</span>
+  </p>
+</main>
+
+<div class="sheet" id="sheet" aria-hidden="true">
+  <form class="sheet-card" id="ipForm" autocomplete="off" novalidate>
+    <h2>连接设置</h2>
+    <p>按键通过 UDP 报文直接发给投影仪；待机状态下由盒子的蓝牙广播唤醒。</p>
+
+    <label for="ipInput">投影仪 IP 地址 / 主机名</label>
+    <input id="ipInput" name="ip" type="text" inputmode="decimal" placeholder="192.168.1.19"
+           spellcheck="false" autocapitalize="off" autocorrect="off" enterkeyhint="done">
+
+    <p class="form-error" id="formError" role="alert"></p>
+
+    <div class="sheet-actions">
+      <button class="btn ghost" type="button" id="cancelBtn">取消</button>
+      <button class="btn primary" type="submit" id="saveBtn">保存</button>
+    </div>
+
+    <p class="sheet-meta">UDP 端口 <span id="udpPortText">16735</span> · 报文 <code>KEYPRESSES:&lt;键值&gt;</code></p>
+
+    <p class="sheet-lan" id="lanHint" hidden>
+      <span>手机访问</span>
+      <button class="lan-url" id="lanUrl" type="button" title="点击复制">—</button>
+    </p>
+  </form>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = (sel) => document.querySelector(sel);
+
+  const KEY_CODES = {
+    power: 116,
+    home: 35,
+    back: 48,
+    menu: 139,
+    ok: 49,
+    up: 36,
+    down: 38,
+    left: 50,
+    right: 37,
+    volUp: 115,
+    volDown: 114,
+    mute: 113,
+  };
+
+  const LABELS = {
+    power: '电源',
+    home: '主页',
+    back: '返回',
+    menu: '菜单',
+    ok: '确定',
+    up: '上',
+    down: '下',
+    left: '左',
+    right: '右',
+    volUp: '音量 +',
+    volDown: '音量 −',
+    mute: '静音',
+  };
+
+  /* 按住可连续发送的键（音量、方向键） */
+  const REPEATABLE = new Set(['up', 'down', 'left', 'right', 'volUp', 'volDown']);
+
+  const KEYBOARD = {
+    ArrowUp: 'up',
+    ArrowDown: 'down',
+    ArrowLeft: 'left',
+    ArrowRight: 'right',
+    Enter: 'ok',
+    ' ': 'ok',
+    Escape: 'back',
+    Backspace: 'back',
+    h: 'home', H: 'home',
+    p: 'wake', P: 'wake',
+    o: 'power', O: 'power',
+    m: 'menu', M: 'menu',
+    '+': 'volUp', '=': 'volUp',
+    '-': 'volDown', '_': 'volDown',
+    '0': 'mute',
+  };
+
+  const led = $('#led');
+  const toastEl = $('#toast');
+  const sheet = $('#sheet');
+  const ipForm = $('#ipForm');
+  const ipInput = $('#ipInput');
+  const ipText = $('#ipText');
+  const formError = $('#formError');
+  const saveBtn = $('#saveBtn');
+  const udpPortText = $('#udpPortText');
+  const lanHint = $('#lanHint');
+  const lanUrl = $('#lanUrl');
+  const wakeBtn = $('#wakeBtn');
+
+  const state = {
+    ip: '192.168.1.19',
+    sending: 0,
+    urls: [],
+  };
+
+  let toastTimer = null;
+  let ledTimer = null;
+  const pressTimers = new Map();
+
+  /* ---------------------------------------------------------------- */
+  /* 小工具                                                            */
+  /* ---------------------------------------------------------------- */
+
+  function showToast(text, isError = false, ms = 1300) {
+    toastEl.textContent = text;
+    toastEl.classList.toggle('error', isError);
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
+  }
+
+  function pulseLed() {
+    led.classList.add('busy');
+    clearTimeout(ledTimer);
+    ledTimer = setTimeout(() => led.classList.remove('busy'), 420);
+  }
+
+  function buzz(ms = 6) {
+    if (typeof navigator.vibrate === 'function') {
+      try { navigator.vibrate(ms); } catch { /* 忽略 */ }
+    }
+  }
+
+  function flash(key) {
+    const el = document.querySelector('[data-key="' + key + '"]');
+    if (!el) return;
+    el.classList.add('pressed');
+    clearTimeout(pressTimers.get(key));
+    pressTimers.set(key, setTimeout(() => el.classList.remove('pressed'), 130));
+  }
+
+  const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  const HOST_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+  function validHost(value) {
+    const v = String(value || '').trim();
+    if (!v || v.length > 253) return false;
+    const m = IPV4_RE.exec(v);
+    if (m) return m.slice(1).every((part) => Number(part) <= 255);
+    return HOST_RE.test(v);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* 发送按键                                                          */
+  /* ---------------------------------------------------------------- */
+
+  async function sendKey(key) {
+    if (!Object.prototype.hasOwnProperty.call(KEY_CODES, key)) return;
+
+    flash(key);
+    buzz();
+
+    state.sending += 1;
+    if (state.sending === 1) led.classList.add('busy');
+
+    try {
+      const res = await fetch('/api/key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, ip: state.ip }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || ('发送失败（HTTP ' + res.status + '）'));
+      }
+
+      pulseLed();
+      showToast('已发送 · ' + LABELS[key] + ' (' + data.code + ')');
+    } catch (err) {
+      showToast(err.message || '发送失败', true);
+    } finally {
+      state.sending -= 1;
+      if (state.sending <= 0) {
+        state.sending = 0;
+        led.classList.remove('busy');
+      }
+    }
+  }
+
+  /* 长按电源：让盒子发 BLE 广播，把待机中的投影仪唤醒 */
+  let waking = false;
+
+  async function powerOn() {
+    if (waking) {
+      showToast('正在唤醒，请稍候…');
+      return;
+    }
+
+    waking = true;
+    wakeBtn.disabled = true;
+    wakeBtn.classList.add('busy');
+    buzz(12);
+    pulseLed();
+    showToast('蓝牙唤醒中…（约 10 秒）', false, 20000);
+
+    try {
+      const res = await fetch('/api/poweron', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || ('唤醒失败（HTTP ' + res.status + '）'));
+      }
+
+      pulseLed();
+      showToast('唤醒广播已发送 · 投影仪准备开机');
+    } catch (err) {
+      showToast(err.message || '唤醒失败', true);
+    } finally {
+      waking = false;
+      wakeBtn.disabled = false;
+      wakeBtn.classList.remove('busy');
+    }
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* 按键绑定（含长按连发 / 长按唤醒）                                   */
+  /* ---------------------------------------------------------------- */
+
+  document.querySelectorAll('[data-key]').forEach((btn) => {
+    const key = btn.dataset.key;
+    let holdTimer = null;
+    let repeatTimer = null;
+    let activePointer = null;
+
+    const stop = () => {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      if (repeatTimer) { clearInterval(repeatTimer); repeatTimer = null; }
+      activePointer = null;
+    };
+
+    const release = () => stop();
+
+    btn.addEventListener('pointerdown', (e) => {
+      if (e.button !== undefined && e.button !== 0) return;
+      if (activePointer !== null) return;
+      activePointer = e.pointerId;
+
+      try { btn.setPointerCapture(e.pointerId); } catch { /* 忽略 */ }
+      e.preventDefault();
+
+      sendKey(key);
+
+      if (!REPEATABLE.has(key)) return;
+
+      holdTimer = setTimeout(() => {
+        repeatTimer = setInterval(() => sendKey(key), 130);
+      }, 420);
+    });
+
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((type) => {
+      btn.addEventListener(type, release);
+    });
+
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+    btn.addEventListener('dragstart', (e) => e.preventDefault());
+  });
+
+  wakeBtn.addEventListener('click', powerOn);
+
+  /* ---------------------------------------------------------------- */
+  /* 键盘操作                                                          */
+  /* ---------------------------------------------------------------- */
+
+  let lastRepeatAt = 0;
+
+  window.addEventListener('keydown', (e) => {
+    if (sheet.classList.contains('open')) {
+      if (e.key === 'Escape') closeSheet();
+      return;
+    }
+    if (e.target instanceof HTMLInputElement) return;
+
+    const key = KEYBOARD[e.key];
+    if (!key) return;
+
+    e.preventDefault();
+
+    /* P：蓝牙开机 */
+    if (key === 'wake') {
+      if (!e.repeat) powerOn();
+      return;
+    }
+
+    if (e.repeat) {
+      const now = performance.now();
+      if (!REPEATABLE.has(key)) return;
+      if (now - lastRepeatAt < 70) return;
+      lastRepeatAt = now;
+    }
+
+    sendKey(key);
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* 设置弹层                                                          */
+  /* ---------------------------------------------------------------- */
+
+  function renderIp() {
+    ipText.textContent = state.ip;
+  }
+
+  /* 只在用 localhost 打开时提示局域网地址，方便换到手机 */
+  function renderLanHint() {
+    const host = location.hostname;
+    const loopback = host === '' || host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+    const url = state.urls[0];
+    const show = loopback && Boolean(url);
+
+    lanHint.hidden = !show;
+    if (show) {
+      lanUrl.textContent = url;
+      lanUrl.dataset.url = url;
+    }
+  }
+
+  function openSheet() {
+    ipInput.value = state.ip;
+    formError.textContent = '';
+    saveBtn.disabled = false;
+    sheet.classList.add('open');
+    sheet.setAttribute('aria-hidden', 'false');
+    setTimeout(() => {
+      ipInput.focus();
+      ipInput.select();
+    }, 70);
+  }
+
+  function closeSheet() {
+    sheet.classList.remove('open');
+    sheet.setAttribute('aria-hidden', 'true');
+  }
+
+  function legacyCopy(text) {
+    return new Promise((resolve, reject) => {
+      try {
+        const el = document.createElement('textarea');
+        el.value = text;
+        el.setAttribute('readonly', '');
+        el.style.cssText = 'position:fixed;top:-1000px;left:0;opacity:0';
+        document.body.appendChild(el);
+        el.select();
+        el.setSelectionRange(0, text.length);
+        const ok = document.execCommand('copy');
+        el.remove();
+        if (ok) resolve();
+        else reject(new Error('copy failed'));
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).catch(() => legacyCopy(text));
+    }
+    return legacyCopy(text);
+  }
+
+  lanUrl.addEventListener('click', () => {
+    const url = lanUrl.dataset.url;
+    if (!url) return;
+    copyText(url).then(
+      () => showToast('已复制 · 用手机浏览器打开'),
+      () => showToast(url),
+    );
+  });
+
+  $('#gear').addEventListener('click', openSheet);
+  $('#ipChip').addEventListener('click', openSheet);
+  $('#cancelBtn').addEventListener('click', closeSheet);
+
+  sheet.addEventListener('pointerdown', (e) => {
+    if (e.target === sheet) closeSheet();
+  });
+
+  ipForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const value = ipInput.value.trim();
+    if (!validHost(value)) {
+      formError.textContent = '请输入有效的 IPv4 地址，例如 192.168.1.19';
+      ipInput.focus();
+      return;
+    }
+
+    formError.textContent = '';
+    saveBtn.disabled = true;
+    saveBtn.textContent = '保存中…';
+
+    try {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip: value }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || '保存失败');
+      }
+
+      state.ip = data.ip;
+      renderIp();
+      closeSheet();
+      showToast('已保存 · ' + data.ip);
+    } catch (err) {
+      formError.textContent = err.message || '保存失败';
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '保存';
+    }
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* 初始化                                                            */
+  /* ---------------------------------------------------------------- */
+
+  (async () => {
+    try {
+      const res = await fetch('/api/config', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.ip) {
+        state.ip = data.ip;
+        renderIp();
+      }
+      if (data.udpPort) udpPortText.textContent = data.udpPort;
+      if (Array.isArray(data.urls)) state.urls = data.urls;
+      renderLanHint();
+    } catch {
+      showToast('无法连接服务，请确认 server.js 正在运行', true);
+    }
+  })();
+
+  renderIp();
+
+  /* 双击页面缩放会破坏遥控器手感，直接吞掉 */
+  document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+})();
+</script>
+</body>
+</html>

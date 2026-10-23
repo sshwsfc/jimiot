@@ -1,0 +1,17 @@
+{
+  "name": "jimiot",
+  "version": "1.0.0",
+  "description": "极米投影仪网页遥控器 + 巴法云/米家 MQTT 接入",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "mqtt": "^5.16.1"
+  }
+}

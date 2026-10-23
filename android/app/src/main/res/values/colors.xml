@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0B0D10</color>
+    <color name="surface">#141821</color>
+    <color name="surface_high">#1A2030</color>
+    <color name="mint">#7EE7D5</color>
+    <color name="mint_dim">#1E4A44</color>
+    <color name="ink">#052A25</color>
+    <color name="text">#E9EEF7</color>
+    <color name="muted">#93A0B6</color>
+    <color name="faint">#5D6678</color>
+    <color name="danger">#FF9A94</color>
+    <color name="divider">#22FFFFFF</color>
+</resources>
